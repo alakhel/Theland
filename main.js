@@ -63,7 +63,7 @@ function changeLocation(id) {
     map.setView([city.geo.lat, city.geo.lng], 13);
 }
 
-var map = L.map('map').setView([53.57132, 9.95367], 13);
+var map = L.map('map').setView([48.8589101, 2.3120407], 13);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
 }).addTo(map);
@@ -76,7 +76,7 @@ function addVehicleMarker(vehicle, initial = false) {
             iconAnchor: [0, 24],
             labelAnchor: [-6, 0],
             popupAnchor: [0, -36],
-            html: `<span class="marker ${vehicule.fuellever <= 20 ? "lowbattery" : "goodbattery"} ${initial ? "available" : "new"}"><i class="fas fa-car"></i></span>`
+            html: `<span class="marker ${vehicle.fuellevel <= 20 ? "lowbattery" : "goodbattery"} ${initial ? "available" : "new"}"><i class="fas fa-car"></i></span>`
         });
         let fuelIcon = vehicle.fuelType === "ELECTRIC" ? '<i class="fas fa-bolt"></i>' : '<i class="fas fa-gas-pump"></i>';
         let marker = L.marker([vehicle.geoCoordinate.latitude, vehicle.geoCoordinate.longitude])

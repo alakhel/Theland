@@ -3,8 +3,8 @@ const zlip = require("zlib");
 const uuid = require("uuid-random");
 
 class ShareNowClient {
-    static VEHICLELISTDELTA = "C2G/S2C/3/VEHICLELISTDELTA.GZ";
-    static VEHICLELIST = "C2G/S2C/3/VEHICLELIST.GZ"
+    static VEHICLELISTDELTA = "C2G/S2C/48/VEHICLELISTDELTA.GZ";
+    static VEHICLELIST = "C2G/S2C/48/VEHICLELIST.GZ"
     vehicles = [];
     #updateCallback;
 

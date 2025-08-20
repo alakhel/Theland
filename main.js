@@ -76,7 +76,7 @@ function addVehicleMarker(vehicle, initial = false) {
             iconAnchor: [0, 24],
             labelAnchor: [-6, 0],
             popupAnchor: [0, -36],
-            html: `<span class="marker ${initial ? "available" : "new"}"><i class="fas fa-car"></i></span>`
+            html: `<span class="marker ${vehicule.fuellever <= 20 ? "lowbattery" : "goodbattery"} ${initial ? "available" : "new"}"><i class="fas fa-car"></i></span>`
         });
         let fuelIcon = vehicle.fuelType === "ELECTRIC" ? '<i class="fas fa-bolt"></i>' : '<i class="fas fa-gas-pump"></i>';
         let marker = L.marker([vehicle.geoCoordinate.latitude, vehicle.geoCoordinate.longitude])

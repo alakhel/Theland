@@ -117,6 +117,12 @@ function removeVehicleMarker(id) {
 }
 
 ws = new WebSocket("ws://theland-4fc4df753e00.herokuapp.com");
+
+
+ws.onopen = () => {
+  console.log("✅ WebSocket connected");
+  ws.send("Hello from client!");
+}
 ws.onmessage = event => {
     json = JSON.parse(event.data);
     if (Array.isArray(json)) {

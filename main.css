@@ -57,6 +57,10 @@ li.selected {
     background-color: #53595c;
     border: 1px solid #53595c;
 }
+.lowbattery {
+    background-color: #FF0000;
+    border: 1px #00FF00
+}
 .new {
     background-color: #25a133;
     border: 1px solid #25a133;

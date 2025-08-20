@@ -69,7 +69,74 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 }).addTo(map);
 
 let markers = {};
-function addVehicleMarker(vehicle, initial = false) {
+let userPosition = null;
+
+// 1. Get user position
+navigator.geolocation.getCurrentPosition(pos => {
+    userPosition = {
+        lat: pos.coords.latitude,
+        lng: pos.coords.longitude
+    };
+    console.log("📍 User position:", userPosition);
+}, err => {
+    console.warn("⚠️ Could not get position:", err);
+});
+
+function getUserPosition() {
+    return new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject);
+    });
+}
+
+// 2. Function to fetch cycling distance from OpenRouteService
+async function getBikeDistance(from, to) {
+    console.log("calculating from ", from)
+    const apiKey = "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjUyYWZmYjE5Yzk5MTRhNTZiMzY2MDJlZGJjMzMwZWI1IiwiaCI6Im11cm11cjY0In0="; // register at https://openrouteservice.org/
+    const url = `https://api.openrouteservice.org/v2/directions/cycling-regular?api_key=${apiKey}&start=${from.lng},${from.lat}&end=${to.lng},${to.lat}`;
+    
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const data = await res.json();
+    const meters = data.features[0].properties.summary.distance;
+    return (meters / 1000).toFixed(1); // km with 1 decimal
+}
+
+// Helper to get user position as a Promise
+function getUserPosition() {
+    return new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject);
+    });
+}
+
+async function calculateBikeDistance(geoCoords) {
+    try {
+        // wait for userPosition first
+        const position = await getUserPosition();
+        const userPosition = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+        };
+
+        // now call your function
+        const distance = await getBikeDistance(userPosition, {
+            lat: geoCoords.latitude,
+            lng: geoCoords.longitude
+        });
+
+        // update HTML
+console.log(distance)
+        return distance
+
+    } catch (err) {
+        console.error("Error getting user position or distance:", err);
+    }
+}
+
+
+// 3. Extended marker function
+async function addVehicleMarker(vehicle, initial = false) {
+    if(vehicle.fuellevel > 20) return true;
+console.log(vehicle)
     let geoCoords = vehicle.geoCoordinate;
     if (geoCoords !== undefined) {
         const icon = L.divIcon({
@@ -78,28 +145,56 @@ function addVehicleMarker(vehicle, initial = false) {
             popupAnchor: [0, -36],
             html: `<span class="marker ${vehicle.fuellevel <= 20 ? "lowbattery" : "goodbattery"} ${initial ? "available" : "new"}"><i class="fas fa-car"></i></span>`
         });
+        
         let fuelIcon = vehicle.fuelType === "ELECTRIC" ? '<i class="fas fa-bolt"></i>' : '<i class="fas fa-gas-pump"></i>';
-        let marker = L.marker([vehicle.geoCoordinate.latitude, vehicle.geoCoordinate.longitude])
-            .addTo(map)
-            .setIcon(icon)
-            .bindPopup(`
-                <div class="popup-car">
-                    <div>
-                        <img width="150" height="150" src="${vehicle.imageUrl}">    
-                    </div>
-                    <div class="popup-car-details">
-                        <div>${vehicle.plate}</div>
-                        <div>${vehicle.address.split(",")[0]}</div>
-                        <div>
-                            <span>${vehicle.fuellevel}%</span>
-                            ${fuelIcon}
-                        </div>
-                    </div>
-                </div>
-            `);
-        markers[vehicle.id] = marker;
+        
+    // Create marker
+let marker = L.marker([geoCoords.latitude, geoCoords.longitude])
+    .addTo(map)
+    .setIcon(icon);
+
+// Default popup content (loading state)
+let popupHtml = `
+    <div class="popup-car">
+        <div><img width="150" height="150" src="${vehicle.imageUrl}"></div>
+        <div class="popup-car-details">
+            <div>${vehicle.plate}</div>
+            <div>${vehicle.address.split(",")[0]}</div>
+            <div>
+                <span>${vehicle.fuellevel}%</span> ${fuelIcon}
+            </div>
+            <div class="bike-distance">Calculating...</div>
+        </div>
+    </div>
+`;
+
+marker.bindPopup(popupHtml);
+
+// Store marker
+markers[vehicle.id] = marker;
+
+// Now fetch distance and update popup dynamically
+calculateBikeDistance(geoCoords).then(distance => {
+    // Update the popup’s .bike-distance element directly
+    const popupElement = marker.getPopup().getElement();
+    if (popupElement) {
+        popupElement.querySelector(".bike-distance").textContent = `${distance} km`;
+    } else {
+        // If popup not yet opened, update the content string
+        let updatedHtml = popupHtml.replace("Calculating...", `${distance} km`);
+        marker.setPopupContent(updatedHtml);
+    }
+});
+
+
+
+            
+
+            
+        
     }
 }
+
 
 function removeVehicleMarker(id) {
     let marker = markers[id];

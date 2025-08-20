@@ -5,7 +5,7 @@ const http = require("http")
 
 const app = express();
 const server = http.createServer(app);
-const wss = new WebSocket.Server(server);
+const wss = new WebSocket.Server({server});
 let client = new shareNow();
 client.connect();
 wss.on("connection", ws => {

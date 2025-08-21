@@ -136,7 +136,7 @@ console.log(distance)
 
 // 3. Extended marker function
 async function addVehicleMarker(vehicle, initial = false) {
-    if(vehicle.fuellevel > 20) return true;
+    if(vehicle.fuellevel > 35) return true;
 console.log(vehicle)
     let geoCoords = vehicle.geoCoordinate;
     if (geoCoords !== undefined) {
@@ -200,12 +200,17 @@ async function addChargersToMap(map) {
     console.log('adding to map')
 
     const chargers = await fetchNearbyType2Chargers();
-        console.log("DATA", chargers)
 
      chargers.forEach(charger => {
       const { lat, lon, address } = charger;
 
-      const marker = L.marker([lat, lon]).addTo(map);
+      const marker = L.circleMarker([lat, lon], {
+  radius: 5,       // size of the dot
+  color: "#007bff", // border color
+  fillColor: "#007bff", // fill color
+  fillOpacity: 0.9
+}).addTo(map);
+
 
       marker.bindPopup(`
         <b>Charging Station</b><br>

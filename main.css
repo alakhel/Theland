@@ -62,7 +62,7 @@ li.selected {
     border: 1px #00FF00;
 }
 .goodbattery {
-    opacity: 0.5;
+        background-color: #bec110;
 }
 .new {
     background-color: #25a133;

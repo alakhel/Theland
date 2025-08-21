@@ -70,6 +70,7 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 
 let markers = {};
 let userPosition = null;
+ addChargersToMap(map)
 
 // 1. Get user position
 navigator.geolocation.getCurrentPosition(pos => {
@@ -187,15 +188,32 @@ calculateBikeDistance(geoCoords).then(distance => {
 });
 
 
+ 
 
-            
 
             
         
     }
 }
 
+async function addChargersToMap(map) {
+    console.log('adding to map')
 
+    const chargers = await fetchNearbyType2Chargers();
+        console.log("DATA", chargers)
+
+     chargers.forEach(charger => {
+      const { lat, lon, address } = charger;
+
+      const marker = L.marker([lat, lon]).addTo(map);
+
+      marker.bindPopup(`
+        <b>Charging Station</b><br>
+        ${address}<br>
+      `);
+    });
+
+}
 function removeVehicleMarker(id) {
     let marker = markers[id];
     if (marker !== undefined) {
@@ -228,3 +246,46 @@ ws.onmessage = event => {
         json.removedVehicles.forEach(removeVehicleMarker);
     }
 };
+
+
+// Rayon de recherche en km
+const RADIUS_KM = 1.5;
+
+// Fonction pour calculer la distance entre deux points lat/lon (Haversine formula)
+function getDistanceKm(lat1, lon1, lat2, lon2) {
+    const R = 6371; // rayon Terre en km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) ** 2 +
+              Math.cos(lat1 * Math.PI / 180) *
+              Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon/2) ** 2;
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+}
+
+async function fetchNearbyType2Chargers() {
+    const API_URL = "https://opendata.paris.fr/api/records/1.0/search/?dataset=belib-points-de-recharge-pour-vehicules-electriques-disponibilite-temps-reel&rows=1000";
+
+    const response = await fetch(API_URL);
+    const data = await response.json();
+
+    const nearbyChargers = data.records
+        .filter(record => record.fields.statut_pdc === "Disponible")
+        .map(record => {
+            if (!record.geometry) return null;
+            return {
+                id: record.recordid,
+                status: record.fields.statut_pdc,
+                address: record.fields.adresse_station,
+                lat: record.geometry.coordinates[1], // careful: GeoJSON order is [lon, lat]
+                lon: record.geometry.coordinates[0],
+            };
+        })
+        .filter(Boolean);
+
+    return nearbyChargers;
+}
+
+
+
